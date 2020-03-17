@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Setup notifications from CodeBuild to AWS Chatbot
+
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: codebuild-chatbot
+    Description: Setup notifications from CodeBuild to AWS Chatbot
+    Author: Symphonia
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: LICENSE
+    ReadmeUrl: README.md
+    Labels: ['codebuild', 'cd', 'devops', 'chatbot', 'chatops', 'slack']
+    HomePageUrl: https://github.com/symphoniacloud/codebuild-chatbot
+    SourceCodeUrl: https://github.com/symphoniacloud/codebuild-chatbot
+
+Parameters:
+  CodeBuildProject:
+    Description: The name of the CodeBuild project to capture notifications from. Equal to the "Ref" value of the AWS::CodeBuild::Project resource
+    Type: String
+  NotificationRuleName:
+    Description: Set if you wish to override the name given to the CodeStar Notification Rule. Defaults to the value of the CodeBuildProject parameter.
+    Type: String
+    Default: ''
+    MaxLength: 64
+  DetailType:
+    Description: The level of detail to include in the notifications for this resource. (see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-codestarnotifications-notificationrule.html)
+    Default: FULL
+    Type: String
+
+Conditions:
+  NotificationRuleNameIsSet: !Not [!Equals [ !Ref NotificationRuleName, '' ]]
+
+Outputs:
+  SNSTopicName:
+    Description: Name of the SNS Topic that you can connect to AWS Chatbot
+    Value: !GetAtt NotificationsTopic.TopicName
+
+Resources:
+  NotificationsTopic:
+    Type: AWS::SNS::Topic
+  
+  NotificationsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref NotificationsTopic
+      PolicyDocument: 
+        Statement:
+        - Action: 'SNS:Publish'
+          Effect: Allow
+          Resource: !Ref NotificationsTopic
+          Principal:
+            Service: codestar-notifications.amazonaws.com
+  
+  NotificationRule:
+    Type: AWS::CodeStarNotifications::NotificationRule
+    Properties:
+      # Name is required, unlike for most resource types
+      Name: !If [ NotificationRuleNameIsSet, !Ref NotificationRuleName, !Ref CodeBuildProject ]
+      Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:${CodeBuildProject}"
+      DetailType: !Ref DetailType
+      EventTypeIds:
+        - codebuild-project-build-state-failed
+        - codebuild-project-build-state-succeeded
+        - codebuild-project-build-state-in-progress
+        - codebuild-project-build-state-stopped
+      Targets:
+        - TargetType: SNS
+          TargetAddress: !Ref NotificationsTopic
