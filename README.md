@@ -4,7 +4,7 @@ An AWS SAR component that sends CodeBuild notifications to [AWS Chatbot](https:/
 
 You'll need to deploy this once per CodeBuild project you wish to receive notitications for.
 
-If you want to integration Chatbot with CodePipeline instead then please see the [CodePipeline version of this component](https://github.com/symphoniacloud/codepipeline-chatbot).
+If you want to integrate Chatbot with CodePipeline instead then please see the [CodePipeline version of this component](https://github.com/symphoniacloud/codepipeline-chatbot).
 
 ## Usage
 
