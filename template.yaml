@@ -58,7 +58,7 @@ Resources:
     Properties:
       # Name is required, unlike for most resource types
       Name: !If [ NotificationRuleNameIsSet, !Ref NotificationRuleName, !Ref CodeBuildProject ]
-      Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:${CodeBuildProject}"
+      Resource: !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:project/${CodeBuildProject}"
       DetailType: !Ref DetailType
       EventTypeIds:
         - codebuild-project-build-state-failed
